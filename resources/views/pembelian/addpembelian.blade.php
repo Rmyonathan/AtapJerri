@@ -19,7 +19,7 @@
                             <label for="no_nota">No. Nota</label>
                             <input type="text" class="form-control" id="no_nota" name="nota" value="{{ $nota ?? 'BL/04/25-00006' }}" readonly style="background-color: #ffc107; color: #000; font-weight: bold;">
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="tanggal">Tanggal</label>
                             <div class="input-group">
@@ -29,7 +29,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="supplier">Supplier</label>
                             <input type="text" id="supplier" name="supplier_display" class="form-control" placeholder="Masukkan kode atau nama supplier">
@@ -37,10 +37,10 @@
                             <div id="supplierDropdown" class="dropdown-menu" style="display: none; position: absolute; width: 100%;"></div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
-                    
-                        
+
+
                         <div class="form-group">
                             <label for="metode_pembayaran">Metode Pembayaran</label>
                             <select class="form-control" id="metode_pembayaran" name="metode_pembayaran">
@@ -238,24 +238,24 @@
                                 <!-- Autocomplete dropdown -->
                                 <div class="dropdown-menu" id="kodeBarangDropdown" style="display: none; max-height: 280px; overflow-y: auto; width: 100%;"></div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="nama_barang">Nama Barang</label>
                                 <input type="text" class="form-control" id="nama_barang" name="nama_barang" required>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="keterangan">Keterangan</label>
                                 <textarea class="form-control" id="keterangan" name="keterangan" rows="2"></textarea>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="harga">Harga</label>
                                 <input type="number" class="form-control" id="harga" name="harga" required>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="quantity">Quantity</label>
                                 <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1" required>
@@ -265,12 +265,12 @@
                                 <label for="panjang">Panjang</label>
                                 <input type="number" class="form-control" id="panjang" name="panjang" value="0" min="0" step="0.01">
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="diskon">Diskon (%)</label>
                                 <input type="number" class="form-control" id="diskon" name="diskon" value="0" min="0" max="100">
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="satuan">Satuan</label>
                                 <select class="form-control" id="satuan" name="satuan">
@@ -283,7 +283,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row mt-3">
                         <div class="col-12">
                             <div class="table-responsive">
@@ -414,7 +414,7 @@
 $('#metode_pembayaran').on('change', function () {
         const metode = $(this).val();
         $('#cara_bayar').html('<option value="">Loading...</option>');
-        
+
         $.ajax({
             url: '{{ url("api/cara-bayar/by-metode") }}',
             method: 'GET',
@@ -437,7 +437,7 @@ $('#metode_pembayaran').on('change', function () {
         $('#cara_bayar_akhir')
             .html(`<option value="${selected}">${selected}</option>`)
             .val(selected);
-    });    
+    });
 {!! file_get_contents(resource_path('views/scripts/pembelian.js')) !!}
 </script>
 @endsection

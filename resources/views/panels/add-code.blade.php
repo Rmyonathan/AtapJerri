@@ -24,12 +24,18 @@
                             <small class="form-text text-muted">Enter the name of the aluminum panels.</small>
                         </div>
                         <div class="form-group">
-                            <label for="attribute"><i class="fas fa-ruler mr-1"></i> Group Name</label>
-                            <input type="text" step="0.01" class="form-control @error('attribute') is-invalid @enderror" id="attribute" name="attribute" value="{{ old('attribute') }}" required>
-                            @error('attribute')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <small class="form-text text-muted">Enter the the group name that describe the group.</small>
+                            <label for="searchPenambah"><i class="fas fa-search mr-1"></i> Enter group name:</label>
+                            <div class="input-group">
+                                <input type="text" name="attribute" id="searchPenambah" class="form-control" placeholder="Search penambah code...">
+                                <div class="input-group-append">
+                                    <button type="button" id="searchPenambahBtn" class="btn btn-primary">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="penambahDropdownContainer" class="position-relative">
+                                <div id="penambahDropdown" class="dropdown-menu w-100" style="display: none;"></div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="kode_barang"><i class="fas fa-ruler mr-1"></i>Kode</label>
@@ -123,6 +129,9 @@
 </div>
 
 <script>
+// Input search handlers
+// Open search modals
+
 document.addEventListener('DOMContentLoaded', function() {
     // Quick length selection buttons
     const lengthButtons = document.querySelectorAll('.length-btn');
@@ -134,6 +143,51 @@ document.addEventListener('DOMContentLoaded', function() {
             lengthInput.value = length;
         });
     });
+
+    const searchPenambahInput = document.getElementById('searchPenambah');
+
+    document.getElementById('searchPenambahBtn').addEventListener('click', function () {
+        // Handle modal opening if needed
+    });
+
+    searchPenambahInput.addEventListener('input', function () {
+        const keyword = this.value;
+        if (keyword.length >= 2) {
+            searchCodesDropdown(keyword, 'penambah');
+        } else {
+            document.getElementById('penambahDropdown').style.display = 'none';
+        }
+    });
+
+    function searchCodesDropdown(keyword, type) {
+        const panels = @json($group_names ?? []);
+        const dropdown = document.getElementById(`${type}Dropdown`);
+        const matchingPanels = panels.filter(panel =>
+            panel.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+        if (matchingPanels.length > 0) {
+            let html = '';
+            matchingPanels.forEach(panel => {
+                html += `<a class="dropdown-item ${type}-dropdown-item" data-kode="${panel}">
+                            ${panel}
+                         </a>`;
+            });
+            dropdown.innerHTML = html;
+            dropdown.style.display = 'block';
+
+            document.querySelectorAll(`.${type}-dropdown-item`).forEach(item => {
+                item.addEventListener('click', function () {
+                    const kode = this.getAttribute('data-kode');
+                    searchPenambahInput.value = kode;
+                    dropdown.style.display = 'none';
+                });
+            });
+        } else {
+            dropdown.innerHTML = '<div class="dropdown-item text-muted">No matching codes found</div>';
+            dropdown.style.display = 'block';
+        }
+    }
 });
 </script>
 @endsection

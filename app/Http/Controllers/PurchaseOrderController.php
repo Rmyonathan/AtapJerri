@@ -22,7 +22,7 @@ class PurchaseOrderController extends Controller
     {
         $this->stockController = $stockController;
     }
- 
+
     private function generateNoPO()
     {
         $now = now();
@@ -81,7 +81,7 @@ class PurchaseOrderController extends Controller
     public function store(Request $request)
     {
         Log::info('PO Store Request:', $request->all());
-        
+
         try {
             // Parse items if they're sent as JSON string
             if ($request->has('items') && is_string($request->items)) {
@@ -89,7 +89,7 @@ class PurchaseOrderController extends Controller
                 // Create a new request with the parsed items
                 $request->merge(['items' => $parsedItems]);
             }
-    
+
             // Validate the request
             $request->validate([
                 'tanggal' => 'required|date',
@@ -102,11 +102,11 @@ class PurchaseOrderController extends Controller
                 'items.*.harga' => 'required|numeric',
                 'items.*.qty' => 'required|numeric|min:1',
             ]);
-    
+
             DB::beginTransaction();
-    
+
             Log::info('PO Validation passed');
-    
+
             // Create purchase order
             $po = PurchaseOrder::create([
                 'no_po' => $this->generateNoPO(),
@@ -125,13 +125,13 @@ class PurchaseOrderController extends Controller
                 'grand_total' => $request->grand_total,
                 'status' => 'pending',
             ]);
-    
+
             Log::info('PO Created:', ['po_id' => $po->id, 'no_po' => $po->no_po]);
-    
+
             // Create PO items
             foreach ($request->items as $item) {
                 Log::info('Processing item:', $item);
-                
+
                 $po->items()->create([
                     'kode_barang' => $item['kodeBarang'],
                     'nama_barang' => $item['namaBarang'],
@@ -143,17 +143,17 @@ class PurchaseOrderController extends Controller
                     'diskon' => $item['diskon'] ?? 0,
                 ]);
             }
-    
+
             DB::commit();
             Log::info('PO creation completed successfully');
-    
+
             return response()->json([
-                'status' => 'success', 
+                'status' => 'success',
                 'message' => 'Purchase Order created successfully.',
                 'po_id' => $po->id,
                 'no_po' => $po->no_po
             ]);
-    
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('PO Creation Error:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
@@ -171,7 +171,7 @@ class PurchaseOrderController extends Controller
 
         return redirect()->route('transaksi.purchaseorder')->with('success', 'PO dibatalkan.');
     }
-    
+
 
     public function completeTransaction($id)
     {
@@ -189,15 +189,15 @@ class PurchaseOrderController extends Controller
             $lastNumber = $lastTransaction ? (int) substr($lastTransaction->no_transaksi, strrpos($lastTransaction->no_transaksi, '/') + 1) : 0;
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
             $noTransaksi = 'KP/WS/' . $newNumber;
-    
+
             // Get customer for stock mutation
             $customer = Customer::where('kode_customer', $po->kode_customer)->first();
             $customerName = $customer ? $customer->nama : 'Unknown Customer';
-    
+
             // Format transaction number for stock mutation
             $creator = 'ADMIN'; // You can replace this with the actual user name
             $noTransaksiMutasi = $noTransaksi . " ({$creator})";
-    
+
             // Create a new transaction
             $transaksi = Transaksi::create([
                 'no_transaksi' => $noTransaksi,
@@ -216,7 +216,7 @@ class PurchaseOrderController extends Controller
                 'grand_total' => $po->grand_total,
                 'status' => 'baru',
             ]);
-    
+
             // Create transaction items and record stock mutations
             foreach ($po->items as $item) {
                 TransaksiItem::create([
@@ -232,7 +232,7 @@ class PurchaseOrderController extends Controller
                     'diskon' => $item->diskon ?? 0,
                     'total' => $item->total,
                 ]);
-    
+
                 // Record the sale in stock mutation
                 $this->stockController->recordSale(
                     $item->kode_barang,
@@ -245,28 +245,28 @@ class PurchaseOrderController extends Controller
                     $po->lokasi ?? 'ALUMKA',
                     'LBR'
                 );
-    
+
                 // Update panel availability
                 $panels = Panel::where('group_id', $item->kode_barang)
                     ->where('available', true)
                     ->limit($item->qty)
                     ->get();
-    
+
                 foreach ($panels as $panel) {
                     $panel->available = false;
                     $panel->save();
                 }
             }
-    
+
             // Update the status of the Purchase Order
             $po->update([
                 'status' => 'completed',
                 'tanggal_jadi' => now(),
             ]);
-    
+
             DB::commit();
             Log::info('Transaction completed successfully'); // Debug log
-    
+
             return redirect()->route('transaksi.listnota')->with('success', 'Transaksi berhasil diselesaikan.');
 
         } catch (\Exception $e) {

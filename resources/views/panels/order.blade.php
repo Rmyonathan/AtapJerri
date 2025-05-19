@@ -103,6 +103,11 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label for="frequencyInput"><i class="fas fa-layer-group mr-1"></i>Berapa kali Anda ingin memotong? </label>
+                        <input type="number" id="frequencyInput" class="form-control" min="1" value="1">
+                    </div>
+
                     <!-- Process Order Button -->
                     <button type="button" id="processOrderBtn" class="btn btn-primary btn-lg">
                         <i class="fas fa-shopping-cart mr-1"></i> Process Order(s)
@@ -264,6 +269,7 @@
     <div id="pengurangContainer"></div>
     <!-- Container for quantity array inputs -->
     <div id="quantityContainer"></div>
+    <input type="hidden" name="frequency" id="formFrequency">
 </form>
 
 <script>
@@ -283,6 +289,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const processOrderBtn = document.getElementById('processOrderBtn');
     const selectedPenambahDisplay = document.getElementById('selectedPenambahDisplay');
     const selectedPenambahText = document.getElementById('selectedPenambahText');
+
+    const frequencyInput = document.getElementById('frequencyInput');
 
     // Open search modals
     searchPenambahBtn.addEventListener('click', function() {
@@ -563,6 +571,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Set penambah value
             document.getElementById('formPenambah').value = selectedPenambah.kode;
 
+            // const currentFrequency = parseInt(frequencyInput.value);
+            // document.getElementById('formFrequency').value = currentFrequency;
+
+            const currentFrequency = document.getElementById('frequencyInput').value;
+            document.getElementById('formFrequency').value = currentFrequency;
+
             // Add all items to the form with proper array notation
             orderItems.forEach((item, index) => {
                 // Create hidden inputs for pengurang array
@@ -584,84 +598,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('orderSubmitForm').submit();
         }
     });
-
-    // Function to process orders sequentially
-    function processNextOrder(index) {
-        if (index >= orderItems.length) {
-            // All orders processed
-            alert('All orders have been processed successfully!');
-            // Reset the form
-            selectedPenambah = null;
-            orderItems = [];
-            searchPenambahInput.value = '';
-            selectedPenambahDisplay.classList.add('d-none');
-            renderOrderItems();
-
-            // Refresh page to show updated inventory
-            window.location.reload();
-            return;
-        }
-
-        const item = orderItems[index];
-
-        // Log what we're processing
-        console.log(`Processing order ${index + 1}/${orderItems.length}:`, {
-            penambah: selectedPenambah.kode,
-            pengurang: item.pengurang,
-            quantity: item.quantity
-        });
-
-        // Set form values
-        document.getElementById('formPenambah').value = selectedPenambah.kode;
-        document.getElementById('formPengurang').value = item.pengurang;
-        document.getElementById('formQuantity').value = item.quantity;
-
-        // Submit the form with AJAX
-        const formData = new FormData(document.getElementById('orderSubmitForm'));
-
-        fetch('{{ route('panels.store-order') }}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'  // Explicitly request JSON response
-            }
-        })
-        .then(response => {
-            // Check if the response is JSON
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return response.json().then(data => {
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Error processing order');
-                    }
-                    return data;
-                });
-            } else {
-                // If not JSON, it's probably an HTML error page
-                return response.text().then(text => {
-                    console.error('Received HTML instead of JSON:', text.substring(0, 100) + '...');
-                    throw new Error('Received HTML error page. Check server logs.');
-                });
-            }
-        })
-        .then(data => {
-            console.log(`Order ${index + 1}/${orderItems.length} processed successfully:`, data);
-            // Process next order
-            processNextOrder(index + 1);
-        })
-        .catch(error => {
-            console.error(`Error processing order ${index + 1}:`, error);
-            alert(`Error processing order ${index + 1}: ${error.message}`);
-
-            // Ask if user wants to continue with next order
-            if (index + 1 < orderItems.length) {
-                if (confirm(`Continue with remaining orders?`)) {
-                    processNextOrder(index + 1);
-                }
-            }
-        });
-    }
 
     // Initialize
     renderOrderItems();

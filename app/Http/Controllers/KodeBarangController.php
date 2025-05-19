@@ -15,7 +15,8 @@ class KodeBarangController extends Controller
     public function createCode()
     {
         //
-        return view('panels.add-code');
+        $group_names = KodeBarang::distinct()->pluck('attribute');
+        return view('panels.add-code', compact('group_names'));
     }
 
     public function viewCode()
