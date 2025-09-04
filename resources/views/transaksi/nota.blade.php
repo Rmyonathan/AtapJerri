@@ -7,45 +7,68 @@ use Riskihajar\Terbilang\Facades\Terbilang;
 <head>
     <meta charset="UTF-8">
     <title>Nota Transaksi</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
-
         @page {
             size: 21.59cm 13.97cm;
             margin: 0mm;
         }
-
         body {
-            font-family: 'Press Start 2P', monospace;
+            font-family: Verdana, sans-serif;
             font-size: 7pt;
-            line-height: 1;
+            line-height: 1.1;
             color: #000;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
         }
-
         .page {
             width: 95%;
-            /* PERUBAHAN FINAL: Padding samping dikurangi lagi menjadi 3mm agar tidak terpotong */
             padding: 8mm 3mm 5mm 3mm;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
         }
-
-        .header { text-align: center; line-height: 1.1; }
-        .header strong { font-size: 9pt; }
-
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 7pt; }
-
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .header-left {
+            flex: 1.3;
+            text-align: left;
+            line-height: 1.2;
+        }
+        .header-left strong { font-size: 10pt; }
+        .header-info-box {
+            flex: 0 0 340px;
+            max-width: 420px;
+            border: 1px solid #000;
+            padding: 8px 12px 8px 12px;
+            background: #fff;
+            font-size: 8pt;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            align-self: flex-start;
+        }
+        .header-info-row .label {
+            font-weight: bold;
+            min-width: 68px;
+            display: inline-block;
+        }
+        .header-info-row .value {
+            font-weight: normal;
+            display: inline-block;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
         .item-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
         .item-table th,
         .item-table td { border: 1px solid #000; padding: 2px 3px; font-size: 7pt; vertical-align: top; }
         .item-table th { font-weight: bold; }
-
         tr.empty-row td {
             border: 1px solid #000;
             border-color: #eee;
@@ -53,13 +76,7 @@ use Riskihajar\Terbilang\Facades\Terbilang;
         }
         tr.empty-row td:first-child { border-left-color: #000; }
         tr.empty-row td:last-child { border-right-color: #000; }
-
-        .footer-container {
-            width: 100%;
-            margin-top: auto;
-            padding-top: 5px;
-        }
-
+        .footer-container { width: 100%; margin-top: auto; padding-top: 5px; }
         .summary-table {
             width: 100%;
             border-collapse: collapse;
@@ -68,7 +85,6 @@ use Riskihajar\Terbilang\Facades\Terbilang;
         }
         .summary-table th, .summary-table td { border: 1px solid #000; padding: 2px 3px; }
         .summary-table th { text-align: left; }
-
         .notes-details-wrapper {
             display: flex;
             flex-direction: row;
@@ -76,7 +92,6 @@ use Riskihajar\Terbilang\Facades\Terbilang;
             width: 100%;
             margin-top: 3px;
         }
-
         .notes-section {
             flex-basis: 70%;
             padding-right: 10px;
@@ -84,14 +99,9 @@ use Riskihajar\Terbilang\Facades\Terbilang;
             line-height: 1.1;
             padding: 2px;
         }
-
-        .details-row {
-            flex-basis: 30%;
-            font-size: 7pt;
-        }
-        .payment-info { }
+        .details-row { flex-basis: 30%; font-size: 7pt; }
+        .payment-info {  }
         .terbilang-section { font-style: italic; margin-top: 5px; }
-
         .signature-row {
             width: 100%;
             overflow: hidden;
@@ -100,29 +110,28 @@ use Riskihajar\Terbilang\Facades\Terbilang;
         }
         .signature-left { float: left; text-align: center; }
         .signature-right { float: right; text-align: center; }
-
         .edit-info-box { font-size: 7px; margin-top: 8px; padding: 2px; border: 1px solid #ccc; line-height: 1.0; clear: both; }
-
         .right { text-align: right; }
         .center { text-align: center; }
-
         .no-print { position: fixed; top: 10px; right: 10px; z-index: 999; }
         .no-print button, .no-print a { margin-left: 8px; padding: 6px 16px; font-size: 14px; border: none; border-radius: 4px; background: #007bff; color: #fff; cursor: pointer; text-decoration: none; }
         .no-print a { background: #6c757d; }
-
         .page-break { page-break-after: always; }
-
-        @media print { .no-print { display: none !important; } }
+        @media print { 
+            .header-info-box { page-break-inside: avoid; }
+            .no-print { display: none !important; } 
+        }
     </style>
 </head>
 <body>
 
 @php
     $defaultCompany = \App\Models\Perusahaan::where('is_default', true)->first() ?? new \App\Models\Perusahaan();
-    $itemsPerPage = 5;
+    $itemsPerPage = 8;
     $groupedItems = $transaction->items->chunk($itemsPerPage);
     $totalPages = $groupedItems->count();
     $pageNum = 0;
+    $globalRowNum = 1;
 @endphp
 
 <div class="no-print">
@@ -136,41 +145,49 @@ use Riskihajar\Terbilang\Facades\Terbilang;
 @foreach ($groupedItems as $chunk)
     @php $pageNum++; @endphp
     <div class="page">
-        {{-- BAGIAN HEADER --}}
-        <div class="header">
-            <strong>{{ $defaultCompany->nama ?? 'CV. ALUMKA CIPTA PRIMA' }}</strong><br>
-            {{ $defaultCompany->alamat ?? 'JL. SINAR RAGA ABI HASAN NO.1553 RT.022 RW.008' }}<br>
-            {{ $defaultCompany->kota ?? '8 ILIR' }}, {{ $defaultCompany->kode_pos ?? 'ILIR TIMUR II' }}<br>
-            TELP. {{ $defaultCompany->telepon ?? '(0711) 311158' }} &nbsp;&nbsp; FAX {{ $defaultCompany->fax ?? '(0711) 311158' }}<br>
-            NO FAKTUR: {{ $transaction->no_transaksi }}
+        <div class="header-container">
+            <div class="header-left">
+                <strong>{{ $defaultCompany->nama ?? 'CV. ALUMKA CIPTA PRIMA' }}</strong><br>
+                {{ $defaultCompany->alamat ?? 'JL. SINAR RAGA ABI HASAN NO.1553 RT.022 RW.008' }}<br>
+                {{ $defaultCompany->kota ?? '8 ILIR' }}, {{ $defaultCompany->kode_pos ?? 'ILIR TIMUR II' }}<br>
+                TELP. {{ $defaultCompany->telepon ?? '(0711) 311158' }} &nbsp;&nbsp; FAX {{ $defaultCompany->fax ?? '(0711) 311158' }}<br>
+                NO FAKTUR: {{ $transaction->no_transaksi }} <br>
+                Halaman: {{ $pageNum }} / {{ $totalPages }}
+            </div>
+            <div class="header-info-box">
+                <div class="header-info-row">
+                    <span class="label">Tanggal:</span>
+                    <span class="value">{{ \Carbon\Carbon::parse($transaction->tanggal)->format('d M Y') }}</span>
+                </div>
+                <div class="header-info-row">
+                    <span class="label">Kpd Yth:</span>
+                </div>
+                <div class="header-info-row">
+                    <span class="label">Nama:</span>
+                    <span class="value">{{ $transaction->customer->nama ?? '-' }}</span>
+                </div>
+                <div class="header-info-row">
+                    <span class="label">Telp:</span>
+                    <span class="value">{{ $transaction->customer->telepon ?? '-' }}</span>
+                </div>
+                <div class="header-info-row">
+                    <span class="label">Alamat:</span>
+                    <span class="value">{{ $transaction->customer->alamat ?? '-' }}</span>
+                </div>
+            </div>
         </div>
 
-        {{-- INFO PELANGGAN & TANGGAL --}}
-        <div class="info-row">
-            <div>
-                <strong>Kpd Yth:</strong><br>
-                Nama: {{ $transaction->customer->nama ?? '-' }}<br>
-                Telp: {{ $transaction->customer->telepon ?? '-' }}<br>
-                Alamat: {{ $transaction->customer->alamat ?? '-' }}
-            </div>
-            <div class="right">
-                {{ \Carbon\Carbon::parse($transaction->tanggal)->format('d M Y') }}<br>
-                HALAMAN: {{ $pageNum }} / {{ $totalPages }}
-            </div>
-        </div>
-
-        {{-- TABEL DAFTAR BARANG --}}
         <table class="item-table">
             <thead>
                 <tr>
                     <th style="width: 5%;">No.</th>
-                    <th style="width: 15%;">Kode Barang</th>
-                    <th style="width: 30%;">Nama Barang</th>
+                    <th style="width: 12%;">Kode Barang</th>
+                    <th style="width: 35%;">Nama Barang</th>
                     <th style="width: 5%;">Qty</th>
                     <th style="width: 15%;">Harga Satuan</th>
-                    <th style="width: 8%;">Disc %</th>
-                    <th style="width: 12%;">Disc Rp</th>
-                    <th style="width: 15%;">Sub Total</th>
+                    <th style="width: 6%;">Disc %</th>
+                    <th style="width: 10%;">Disc Rp</th>
+                    <th style="width: 17%;">Sub Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -178,7 +195,7 @@ use Riskihajar\Terbilang\Facades\Terbilang;
                 @foreach ($chunk as $i => $item)
                     @php $rowCount++; @endphp
                     <tr>
-                        <td class="center">{{ (($pageNum - 1) * $itemsPerPage) + $i + 1 }}</td>
+                        <td class="center">{{ $globalRowNum++ }}</td>
                         <td>{{ $item->kode_barang }}</td>
                         <td>{{ $item->keterangan }}</td>
                         <td class="center">{{ $item->qty }}</td>
@@ -189,7 +206,6 @@ use Riskihajar\Terbilang\Facades\Terbilang;
                     </tr>
                 @endforeach
 
-                {{-- TEKNIK BARIS KOSONG OTOMATIS --}}
                 @if ($loop->last)
                     @for ($j = $rowCount; $j < $itemsPerPage; $j++)
                         <tr class="empty-row">
@@ -201,10 +217,8 @@ use Riskihajar\Terbilang\Facades\Terbilang;
             </tbody>
         </table>
 
-        {{-- HANYA TAMPILKAN FOOTER DI HALAMAN TERAKHIR --}}
         @if ($loop->last)
         <div class="footer-container">
-
             <table class="summary-table">
                 <tr>
                     <th style="width: 85%">TOTAL</th>
@@ -223,24 +237,19 @@ use Riskihajar\Terbilang\Facades\Terbilang;
                     <td class="right"><strong>Rp {{ number_format($transaction->grand_total, 0, ',', '.') }}</strong></td>
                 </tr>
             </table>
-
             <div class="notes-details-wrapper">
                 <div class="notes-section">
-                    {{-- <strong>PERHATIAN !!!</strong><br>
-                    Barang masih titipan dari {{ $defaultCompany->nama ?? 'CV. Alumka Cipta Prima' }}, bila belum dilunasi. Pembayaran dengan Cek, Giro, Slip dan lainnya akan dianggap lunas bila dapat diuangkan. --}}
+                    <div class="terbilang-section">
+                        Terbilang: {{ ucwords(Terbilang::make($transaction->grand_total, ' rupiah')) }}
+                    </div>
                 </div>
-
                 <div class="details-row">
                     <div class="payment-info">
                         Titipan Uang: Rp {{ number_format($transaction->dp, 0, ',', '.') }}<br>
                         Sisa Piutang: Rp {{ number_format($transaction->grand_total - $transaction->dp, 0, ',', '.') }}
                     </div>
-                    <div class="terbilang-section">
-                        Terbilang: {{ ucwords(Terbilang::make($transaction->grand_total, ' rupiah')) }}
-                    </div>
                 </div>
             </div>
-
             <div class="signature-row">
                 <div class="signature-left">
                     HORMAT KAMI<br><br><br><br>
@@ -251,7 +260,6 @@ use Riskihajar\Terbilang\Facades\Terbilang;
                     (_____________)
                 </div>
             </div>
-
             @if($transaction->is_edited || $transaction->status == 'canceled')
             <div class="edit-info-box">
                 @if($transaction->is_edited)
@@ -263,15 +271,12 @@ use Riskihajar\Terbilang\Facades\Terbilang;
                 @endif
             </div>
             @endif
-
         </div>
         @endif
     </div>
-
     @if (!$loop->last)
         <div class="page-break"></div>
     @endif
 @endforeach
-
 </body>
 </html>
